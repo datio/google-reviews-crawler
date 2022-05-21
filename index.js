@@ -65,14 +65,14 @@ const url = "https://www.google.com/maps/place/Infomax+Insurance+Brokers/@40.673
 })();
 
 const viewExpandContent = async () => {
-	let scrollableReviewsContainer = await page.waitForSelector('.section-scrollbox');
+	let scrollableReviewsContainer = await page.waitForSelector('[aria-label="Μεγαλύτερη συνάφεια"]');
 
 	// first scroll only reloads/re-renders the containing reviews
 	await scrollElToBottom(scrollableReviewsContainer);
 
 	for (; ;) {
 		try {
-			await page.click('text='+langPhrases[lang].sort, { timeout: 5000, clickCount: 3, delay: 200 });
+			await page.click('text=' + langPhrases[lang].sort, { timeout: 5000, clickCount: 3, delay: 200 });
 
 			// wait for the custom dropdown select options popup
 			await page.keyboard.press('ArrowDown');
@@ -87,7 +87,7 @@ const viewExpandContent = async () => {
 
 	await new Promise((resolve) => setTimeout(resolve, 1000));
 
-	scrollableReviewsContainer = await page.waitForSelector('.section-scrollbox');
+	scrollableReviewsContainer = await page.waitForSelector("//button[contains(text(), '" + langPhrases[lang].more + "')]/../../../../../../..");
 
 	let hitBottom = false;
 	while (!hitBottom) {
@@ -100,7 +100,7 @@ const viewExpandContent = async () => {
 		hitBottom = await scrollableReviewsContainer.evaluate((el) => el.scrollHeight - el.scrollTop === el.clientHeight);
 	}
 
-	let expandTextEls = await scrollableReviewsContainer.$$("//button[contains(text(), '"+ langPhrases[lang].more +"')]");
+	let expandTextEls = await scrollableReviewsContainer.$$("//button[contains(text(), '" + langPhrases[lang].more + "')]");
 
 	for (let expandEl of expandTextEls) {
 		await expandEl.click({ timeout: 5000, delay: 200 });
@@ -124,7 +124,7 @@ const getReviewsData = async () => {
 		let data = [];
 		for (let i = 0; i < reviewContentEls.length; i++) {
 			let dataObj = {
-				id: reviewContentEls.length-i, // incremental, local id
+				id: reviewContentEls.length - i, // incremental, local id
 				review_answer_date: null,
 				review_answer_text: null,
 				review_date: null, // relative string time in the language the page was rendered (?hl=el parameter value for Greek)
@@ -139,7 +139,7 @@ const getReviewsData = async () => {
 
 			try {
 				dataObj.review_answer_date = document.evaluate(
-					"./div[3]/div[9]/div[1]/span[2]",
+					"./div[4]/div[9]/div[1]/span[2]",
 					reviewContentEls[i],
 					null,
 					XPathResult.FIRST_ORDERED_NODE_TYPE,
@@ -147,7 +147,7 @@ const getReviewsData = async () => {
 				).singleNodeValue.innerText;
 
 				dataObj.review_answer_text = document.evaluate(
-					"./div[3]/div[9]/div[2]",
+					"./div[4]/div[9]/div[2]",
 					reviewContentEls[i],
 					null,
 					XPathResult.FIRST_ORDERED_NODE_TYPE,
@@ -156,7 +156,7 @@ const getReviewsData = async () => {
 			} catch (error) { }
 
 			dataObj.review_date = document.evaluate(
-				"./div[3]/div[1]/span[3]",
+				"./div[4]/div[1]/span[3]",
 				reviewContentEls[i],
 				null,
 				XPathResult.FIRST_ORDERED_NODE_TYPE,
@@ -165,7 +165,7 @@ const getReviewsData = async () => {
 
 			try {
 				dataObj.review_likes = document.evaluate(
-					"./div[3]/div[8]/button[2]/span",
+					"./div[4]/div[8]/button[2]/span/span[2]",
 					reviewContentEls[i],
 					null,
 					XPathResult.FIRST_ORDERED_NODE_TYPE,
@@ -184,7 +184,7 @@ const getReviewsData = async () => {
 			} catch (error) { }
 
 			dataObj.review_url = document.evaluate(
-				"./div[2]/div/div/a",
+				"./div[2]/div[2]/div/a",
 				reviewContentEls[i],
 				null,
 				XPathResult.FIRST_ORDERED_NODE_TYPE,
@@ -202,7 +202,7 @@ const getReviewsData = async () => {
 			dataObj.reviewer_avatar = dataObj.reviewer_avatar.replace(/=.*$/g, '');
 
 			dataObj.reviewer_name = document.evaluate(
-				"./div[2]/div/div/a/div/span[1]",
+				"./div[2]/div[2]/div/a/div",
 				reviewContentEls[i],
 				null,
 				XPathResult.FIRST_ORDERED_NODE_TYPE,
@@ -213,7 +213,7 @@ const getReviewsData = async () => {
 				//maps.gstatic.com/consumer/images/icons/2x/ic_star_rate_14.png
 				//maps.gstatic.com/consumer/images/icons/2x/ic_star_rate_empty_14.png
 				//maps.gstatic.com/consumer/images/icons/2x/ic_star_rate_half_14.png
-				"count(./div[3]/div[1]/span[@role='img']/img[contains(@src,'ic_star_rate_14.png')])",
+				"count(.//img[contains(@src,'ic_star_rate_14.png')])", // might use aria-label in the future
 				reviewContentEls[i],
 				null,
 				XPathResult.ANY_TYPE,
@@ -221,7 +221,7 @@ const getReviewsData = async () => {
 			).numberValue;
 
 			dataObj.review_text = document.evaluate(
-				"./div[3]/div[2]/span[2]",
+				"./div[4]/div[2]",
 				reviewContentEls[i],
 				null,
 				XPathResult.FIRST_ORDERED_NODE_TYPE,
@@ -233,7 +233,7 @@ const getReviewsData = async () => {
 
 			try {
 				dataObj.reviewer_total_reviews = document.evaluate(
-					"./div[2]/div/div/a/div/span[2]",
+					"./div[2]/div[2]/div/a/div[2]",
 					reviewContentEls[i],
 					null,
 					XPathResult.FIRST_ORDERED_NODE_TYPE,
